@@ -1,9 +1,19 @@
-import { Elysia } from 'elysia';
+import { Elysia, t } from 'elysia';
 import { swagger } from '@elysiajs/swagger';
 import { users, validateUser } from './routes/users';
+import { jwt } from '@elysiajs/jwt';
+import { cookie } from '@elysiajs/cookie';
 
 const app = new Elysia()
   .use(swagger())
+  .use(cookie())
+  .use(
+    jwt({
+      name: 'jwt',
+      secret: process.env.JWT_SECRET_KEY!,
+      exp: '3d',
+    })
+  )
   .get('/', () => 'Hello Elysia')
   .get('/api/public', () => {
     return {
@@ -11,6 +21,37 @@ const app = new Elysia()
       status: 'success',
     };
   })
+  .post(
+    '/api/login',
+    async ({ jwt, cookie, body: { username, password } }) => {
+      const user = users.find((user) => {
+        return user.username === username && user.password === password;
+      });
+
+      if (!user) return;
+
+      const token = await jwt.sign({
+        username,
+        password,
+      });
+
+      cookie.authToken.set({
+        value: token,
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax',
+        maxAge: 60 * 60,
+        path: '/',
+      });
+      return token;
+    },
+    {
+      body: t.Object({
+        username: t.String({ minLength: 1 }),
+        password: t.String({ minLength: 1 }),
+      }),
+    }
+  )
   .derive({ as: 'local' }, (request) => {
     const { headers } = request;
     return {
