@@ -1,4 +1,3 @@
-import Elysia from 'elysia';
 import { ERROR_CODES } from '../errorCodes';
 
 export enum Role {
@@ -14,19 +13,19 @@ export interface User {
   secret: string;
 }
 
-export const users = [
+export const users: User[] = [
   {
     id: 1,
     username: 'admin',
     password: 'admin123',
-    role: 'admin',
+    role: Role.Admin,
     secret: 'admin-secret-123',
   },
   {
     id: 2,
     username: 'user',
     password: 'user123',
-    role: 'basic',
+    role: Role.Basic,
     secret: 'user-secret-456',
   },
 ];
